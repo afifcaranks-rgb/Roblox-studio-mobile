@@ -15,6 +15,7 @@ import com.google.android.filament.EntityManager
 import com.google.android.filament.Filament
 import com.google.android.filament.IndexBuffer
 import com.google.android.filament.Material
+import com.google.android.filament.MaterialInstance
 import com.google.android.filament.RenderableManager
 import com.google.android.filament.Renderer
 import com.google.android.filament.Scene
@@ -45,6 +46,7 @@ class FilamentViewportView @JvmOverloads constructor(
     private var camera: Camera? = null
     private var swapChain: SwapChain? = null
     private var material: Material? = null
+    private var materialInstance: MaterialInstance? = null
     private var vertexBuffer: VertexBuffer? = null
     private var indexBuffer: IndexBuffer? = null
 
@@ -141,6 +143,7 @@ class FilamentViewportView @JvmOverloads constructor(
             material = Material.Builder()
                 .payload(buffer, buffer.remaining())
                 .build(targetEngine)
+            materialInstance = material?.defaultInstance
         } finally {
             MaterialBuilder.shutdown()
         }
@@ -207,7 +210,7 @@ class FilamentViewportView @JvmOverloads constructor(
                 0,
                 indices.size
             )
-            .material(0, material!!.defaultInstance)
+            .material(0, materialInstance!!)
             .culling(false)
             .build(targetEngine, cubeEntity)
     }
@@ -342,6 +345,7 @@ class FilamentViewportView @JvmOverloads constructor(
             }
             vertexBuffer?.let(activeEngine::destroyVertexBuffer)
             indexBuffer?.let(activeEngine::destroyIndexBuffer)
+            materialInstance?.let(activeEngine::destroyMaterialInstance)
             material?.let(activeEngine::destroyMaterial)
             filamentView?.let(activeEngine::destroyView)
             scene?.let(activeEngine::destroyScene)
@@ -357,12 +361,9 @@ class FilamentViewportView @JvmOverloads constructor(
         filamentView = null
         camera = null
         material = null
+        materialInstance = null
         vertexBuffer = null
         indexBuffer = null
     }
 
-    override fun onDetachedFromWindow() {
-        release()
-        super.onDetachedFromWindow()
-    }
 }
